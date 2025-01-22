@@ -55,5 +55,4 @@ _Estructura atómica representada con esferas para cada átomo._
 ⠨⠿⡿⢿⣿⣷⣿⣿⠿⣿⣿⣟⣴⣼⣿⣇⣷⣷⣷⣾⣿⣿⣿⣿⣿⣿⡟⠇⠀
 ⠀⠀⠀⠈⠹⠉⠀⠀⠀⠘⠙⢻⠟⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠻⣿⠿⡿⠇⠁⠀⠀
 
-- Desarrollado por: Ismael Gaspar Cruz -
-*
+Por: Isgaar
