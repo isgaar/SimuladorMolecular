@@ -1,0 +1,5 @@
+flask
+fastapi
+uvicorn
+biopython
+python-multipart

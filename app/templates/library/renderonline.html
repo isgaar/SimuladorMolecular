@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor Molecular 3D</title>
+
+    <!-- Enlace a Font Awesome para los iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Enlace al archivo local de 3Dmol.js -->
+    <script src="/static/js/3Dmol-min.js"></script>
+
+    <!-- Enlace a la hoja de estilos -->
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="icon" href="/app/assets/icon.png" type="image/png">
+</head>
+<body>
+    <!-- Barra de navegación -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="#">Inicio</a></li>
+            <li><a href="#">Cursos</a></li>
+            <li class="active"><a href="#">Biblioteca</a></li>
+        </ul>
+    </nav>
+
+    <!-- Contenido principal -->
+    <main>
+        <div class="content-container">
+            <!-- Contenedor del visor 3D -->
+            <div class="viewer-container">
+                <!-- Opciones dentro del render -->
+                <div class="controls-overlay">
+                    <select id="renderMode">
+                        <option value="cartoon">Vista Molecular</option>
+                        <option value="atomic-stick">Vista Atómica (Bastones)</option>
+                        <option value="atomic-sphere">Vista Atómica (Esferas)</option>
+                    </select>
+                    <div>
+                        <button class="btn-fullscreen" id="fullscreenButton">Pantalla Completa</button>
+                        <button class="btn-reset" id="resetViewButton">Reiniciar Vista</button>
+                    </div>
+                </div>
+                <div id="viewer" class="viewer"></div>
+            </div>
+            
+
+            <!-- Información del archivo PDB -->
+            <div id="pdbInfo">
+                <h3>Información del Archivo PDB</h3>
+
+                <!-- Formulario para cargar archivo -->
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <label for="file">Cargar archivo:</label>
+                    <input type="file" id="file" name="file" accept=".pdb" required>
+                    <button type="submit">
+                        <i class="fas fa-play"></i> Iniciar renderizado
+                    </button>
+                </form>
+
+                <!-- Tabla de información -->
+                <table>
+                    <tr><td>Nombre del archivo:</td><td id="filename"></td></tr>
+                    <tr><td>Átomos:</td><td id="atoms"></td></tr>
+                    <tr><td>Cadenas:</td><td id="chains"></td></tr>
+                    <tr><td>Residuos:</td><td id="residues"></td></tr>
+                    <tr><td>Tamaño:</td><td id="size"></td></tr>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Script para manejo del visor 3D -->
+    
+
+
+    <!-- Script para manejo del visor 3D y carga del archivo -->
+    <script>
+        const form = document.getElementById("uploadForm");
+const viewerDiv = document.getElementById("viewer");
+const renderMode = document.getElementById("renderMode");
+const fullscreenButton = document.getElementById("fullscreenButton");
+const resetViewButton = document.getElementById("resetViewButton");
+
+// Inicializa el visor 3Dmol.js
+const viewer = $3Dmol.createViewer(viewerDiv, { backgroundColor: "white" });
+
+// Cambiar entre modos de renderizado
+renderMode.addEventListener("change", (event) => {
+    const mode = event.target.value;
+    viewer.setStyle({}, {}); // Limpia estilos actuales
+
+    if (mode === "cartoon") {
+        viewer.setStyle({}, { cartoon: { color: "spectrum" } });
+    } else if (mode === "atomic-stick") {
+        viewer.setStyle({}, { stick: { radius: 0.2, colorscheme: "cpk" } });
+    } else if (mode === "atomic-sphere") {
+        viewer.setStyle({}, { sphere: { scale: 0.3, colorscheme: "cpk" } });
+    }
+
+    viewer.zoomTo();
+    viewer.render();
+});
+
+// Pantalla completa
+fullscreenButton.addEventListener("click", () => {
+    if (viewerDiv.requestFullscreen) {
+        viewerDiv.requestFullscreen();
+    } else if (viewerDiv.webkitRequestFullscreen) {
+        viewerDiv.webkitRequestFullscreen();
+    } else if (viewerDiv.mozRequestFullScreen) {
+        viewerDiv.mozRequestFullScreen();
+    } else if (viewerDiv.msRequestFullscreen) {
+        viewerDiv.msRequestFullscreen();
+    }
+});
+
+// Reiniciar vista
+resetViewButton.addEventListener("click", () => {
+    viewer.zoomTo();
+    viewer.render();
+});
+
+// Manejo del formulario de carga
+form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const fileInput = document.getElementById("file");
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    try {
+        const response = await fetch("/pdb/upload", { method: "POST", body: formData });
+
+        if (response.ok) {
+            const data = await response.json();
+
+            // Actualiza la información en la tabla
+            document.getElementById("filename").innerText = data.filename;
+            document.getElementById("atoms").innerText = data.pdb_data.atoms || "N/A";
+            document.getElementById("chains").innerText = (data.pdb_data.chains || []).join(", ");
+            document.getElementById("residues").innerText = (data.pdb_data.residues || []).join(", ");
+            document.getElementById("size").innerText = `${data.pdb_data.size || 0} bytes`;
+
+            // Renderiza el archivo cargado
+            const pdbData = data.pdb_content;
+
+            viewer.clear();
+            viewer.addModel(pdbData, "pdb");
+            renderMode.dispatchEvent(new Event("change")); // Aplica el estilo seleccionado
+        } else {
+            alert("Error al procesar el archivo.");
+        }
+    } catch (error) {
+        console.error("Error en la carga del archivo:", error);
+        alert("Error al conectarse con el servidor.");
+    }
+});
+
+    </script>
+</body>
+</html>
